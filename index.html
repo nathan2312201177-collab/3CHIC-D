@@ -4,68 +4,43 @@
   <meta charset="UTF-8">
   <title>Site Révision & Cours</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background-color: #f4f4f4;
-    }
-
-    header {
-      background: #333;
-      color: white;
-      padding: 15px;
-      text-align: center;
-    }
-
-    .tabs {
-      display: flex;
-      background: #444;
-    }
-
-    .tab {
-      flex: 1;
-      padding: 15px;
-      text-align: center;
-      color: white;
-      cursor: pointer;
-    }
-
-    .tab:hover {
-      background: #666;
-    }
-
-    .tab.active {
-      background: #222;
-    }
-
-    .content {
-      padding: 20px;
-      display: none;
-      background: white;
-      min-height: 300px;
-    }
-
-    .content.active {
-      display: block;
-    }
+    body { font-family: Arial; margin:0; background:#f4f4f4; }
+    header { background:#333; color:white; padding:15px; text-align:center; }
+    .tabs { display:flex; background:#444; }
+    .tab { flex:1; padding:15px; text-align:center; color:white; cursor:pointer; }
+    .tab.active { background:#222; }
+    .content { display:none; padding:20px; background:white; }
+    .content.active { display:block; }
 
     .image-container img {
-      max-width: 200px;
-      margin: 10px;
-      border-radius: 10px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      max-width:200px; margin:10px; border-radius:10px; cursor:pointer;
     }
 
-    .upload {
-      margin-top: 15px;
+    .pdf-item, .img-item {
+      display:flex; align-items:center; gap:10px; margin:10px 0;
     }
+
+    button {
+      background:red; color:white; border:none; padding:5px 10px;
+      border-radius:5px; cursor:pointer;
+    }
+
+    .download {
+      background:green;
+    }
+
+    .modal {
+      display:none; position:fixed; top:0; left:0;
+      width:100%; height:100%; background:rgba(0,0,0,0.8);
+      justify-content:center; align-items:center;
+    }
+
+    .modal img { max-width:90%; max-height:90%; }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Mon Site de Révision</h1>
-</header>
+<header><h1>Mon Site de Révision</h1></header>
 
 <div class="tabs">
   <div class="tab active" onclick="showTab('cours', event)">Cours</div>
@@ -74,48 +49,109 @@
 
 <div id="cours" class="content active">
   <h2>📘 Cours</h2>
-  <p>Ajoute ici tes cours : texte, images, vidéos...</p>
 
-  <div class="upload">
-    <input type="file" accept="image/*" onchange="addImage(event, 'coursImages')">
-  </div>
+  <h3>Images</h3>
+  <input type="file" accept="image/*" onchange="addImage(event, 'coursImages')">
+  <div id="coursImages"></div>
 
-  <div id="coursImages" class="image-container"></div>
+  <h3>PDF</h3>
+  <input type="file" accept="application/pdf" onchange="addPDF(event, 'coursPDFs')">
+  <div id="coursPDFs"></div>
 </div>
 
 <div id="revision" class="content">
   <h2>🧠 Révision</h2>
-  <p>Ajoute ici des quiz, fiches de révision ou exercices.</p>
 
-  <div class="upload">
-    <input type="file" accept="image/*" onchange="addImage(event, 'revisionImages')">
-  </div>
+  <h3>Images</h3>
+  <input type="file" accept="image/*" onchange="addImage(event, 'revisionImages')">
+  <div id="revisionImages"></div>
 
-  <div id="revisionImages" class="image-container"></div>
+  <h3>PDF</h3>
+  <input type="file" accept="application/pdf" onchange="addPDF(event, 'revisionPDFs')">
+  <div id="revisionPDFs"></div>
+</div>
+
+<div id="modal" class="modal" onclick="closeModal()">
+  <img id="modalImg">
 </div>
 
 <script>
-  function showTab(tabId, event) {
-    const contents = document.querySelectorAll('.content');
-    const tabs = document.querySelectorAll('.tab');
+function showTab(tabId, event) {
+  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  event.target.classList.add('active');
+}
 
-    contents.forEach(c => c.classList.remove('active'));
-    tabs.forEach(t => t.classList.remove('active'));
+function addImage(event, containerId) {
+  const container = document.getElementById(containerId);
+  const file = event.target.files[0];
 
-    document.getElementById(tabId).classList.add('active');
-    event.target.classList.add('active');
+  if(file){
+    const wrapper = document.createElement('div');
+    wrapper.className = 'img-item';
+
+    const img = document.createElement('img');
+    const url = URL.createObjectURL(file);
+    img.src = url;
+    img.onclick = ()=>zoomImage(url);
+
+    const download = document.createElement('a');
+    download.href = url;
+    download.download = file.name;
+    download.textContent = 'Télécharger';
+    download.className = 'download';
+
+    const del = document.createElement('button');
+    del.textContent='Supprimer';
+    del.onclick=()=>wrapper.remove();
+
+    wrapper.appendChild(img);
+    wrapper.appendChild(download);
+    wrapper.appendChild(del);
+    container.appendChild(wrapper);
   }
+}
 
-  function addImage(event, containerId) {
-    const container = document.getElementById(containerId);
-    const file = event.target.files[0];
+function addPDF(event, containerId) {
+  const container = document.getElementById(containerId);
+  const file = event.target.files[0];
 
-    if (file) {
-      const img = document.createElement('img');
-      img.src = URL.createObjectURL(file);
-      container.appendChild(img);
-    }
+  if(file){
+    const wrapper = document.createElement('div');
+    wrapper.className='pdf-item';
+
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(file);
+    link.href = url;
+    link.textContent = file.name;
+    link.target='_blank';
+
+    const download = document.createElement('a');
+    download.href = url;
+    download.download = file.name;
+    download.textContent = 'Télécharger';
+    download.className = 'download';
+
+    const del = document.createElement('button');
+    del.textContent='Supprimer';
+    del.onclick=()=>wrapper.remove();
+
+    wrapper.appendChild(link);
+    wrapper.appendChild(download);
+    wrapper.appendChild(del);
+    container.appendChild(wrapper);
   }
+}
+
+function zoomImage(src){
+  document.getElementById('modal').style.display='flex';
+  document.getElementById('modalImg').src=src;
+}
+
+function closeModal(){
+  document.getElementById('modal').style.display='none';
+}
 </script>
 
 </body>
