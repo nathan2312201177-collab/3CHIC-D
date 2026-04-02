@@ -1,168 +1,169 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Révision App</title>
-  <style>
-    body { font-family: 'Segoe UI', sans-serif; margin:0; background:#0f172a; color:#e2e8f0; }
-    header { padding:20px; text-align:center; font-size:24px; font-weight:bold; background:#020617; }
-
-    .tabs { display:flex; }
-    .tab { flex:1; padding:15px; text-align:center; cursor:pointer; background:#1e293b; }
-    .tab.active { background:#38bdf8; color:#020617; font-weight:bold; }
-
-    .content { display:none; padding:20px; }
-    .content.active { display:block; }
-
-    .dropzone {
-      border:2px dashed #38bdf8;
-      padding:20px;
-      text-align:center;
-      margin-bottom:15px;
-      border-radius:10px;
-    }
-
-    .item {
-      display:flex; align-items:center; gap:10px;
-      background:#1e293b; padding:10px; margin:10px 0; border-radius:10px;
-    }
-
-    img { max-width:120px; border-radius:10px; cursor:pointer; }
-
-    button, a {
-      padding:5px 10px; border:none; border-radius:6px;
-      text-decoration:none; cursor:pointer;
-    }
-
-    .delete { background:#ef4444; color:white; }
-    .download { background:#22c55e; color:white; }
-
-    .modal {
-      display:none; position:fixed; top:0; left:0;
-      width:100%; height:100%; background:rgba(0,0,0,0.9);
-      justify-content:center; align-items:center;
-    }
-
-    .modal img { max-width:90%; max-height:90%; }
-  </style>
+<meta charset="UTF-8">
+<title>Révision App PRO</title>
+<style>
+body{font-family:sans-serif;margin:0;background:#0f172a;color:white}
+header{padding:15px;text-align:center;background:#020617}
+input,button{padding:8px;margin:5px;border-radius:5px;border:none}
+button{cursor:pointer}
+.tabs{display:flex}
+.tab{flex:1;padding:10px;text-align:center;cursor:pointer;background:#1e293b}
+.tab.active{background:#38bdf8;color:black}
+.content{display:none;padding:20px}
+.content.active{display:block}
+.item{display:flex;gap:10px;background:#1e293b;padding:10px;margin:10px 0}
+img{max-width:100px;cursor:pointer}
+.delete{background:red;color:white}
+.download{background:green;color:white}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:black;justify-content:center;align-items:center}
+.modal img{max-width:90%}
+</style>
 </head>
 <body>
 
-<header>📚 Révision App</header>
+<header>
+<h2>📚 Révision App PRO</h2>
+<div id="userInfo"></div>
+</header>
 
+<div id="auth">
+<input id="username" placeholder="Pseudo">
+<input id="password" type="password" placeholder="Mot de passe">
+<button onclick="register()">S'inscrire</button>
+<button onclick="login()">Se connecter</button>
+</div>
+
+<div id="app" style="display:none">
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('cours', event)">Cours</div>
-  <div class="tab" onclick="switchTab('revision', event)">Révision</div>
+<div class="tab active" onclick="switchTab('cours',event)">Cours</div>
+<div class="tab" onclick="switchTab('revision',event)">Révision</div>
 </div>
 
 <div id="cours" class="content active">
-  <div class="dropzone" ondrop="drop(event,'cours')" ondragover="allowDrop(event)">
-    Glisse tes fichiers ici (images ou PDF)
-  </div>
-  <div id="coursList"></div>
+<input type="file" multiple onchange="handleFiles(event,'cours')">
+<div id="coursList"></div>
 </div>
 
 <div id="revision" class="content">
-  <div class="dropzone" ondrop="drop(event,'revision')" ondragover="allowDrop(event)">
-    Glisse tes fichiers ici (images ou PDF)
-  </div>
-  <div id="revisionList"></div>
+<input type="file" multiple onchange="handleFiles(event,'revision')">
+<div id="revisionList"></div>
+</div>
 </div>
 
 <div id="modal" class="modal" onclick="closeModal()">
-  <img id="modalImg">
+<img id="modalImg">
 </div>
 
 <script>
-function switchTab(id, e){
-  document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  e.target.classList.add('active');
+let currentUser=null;
+
+function getUsers(){return JSON.parse(localStorage.getItem('users')||'{}');}
+function saveUsers(u){localStorage.setItem('users',JSON.stringify(u));}
+
+function register(){
+const u=document.getElementById('username').value;
+const p=document.getElementById('password').value;
+if(!u||!p) return alert('Remplis tout');
+let users=getUsers();
+if(users[u]) return alert('Existe déjà');
+users[u]={password:p};
+saveUsers(users);
+alert('Compte créé');
 }
 
-function allowDrop(e){ e.preventDefault(); }
-
-function drop(e, type){
-  e.preventDefault();
-  const files = e.dataTransfer.files;
-  for(let file of files){ addFile(file, type); }
+function login(){
+const u=document.getElementById('username').value;
+const p=document.getElementById('password').value;
+let users=getUsers();
+if(!users[u]||users[u].password!==p) return alert('Erreur');
+currentUser=u;
+localStorage.setItem('session',u);
+document.getElementById('auth').style.display='none';
+document.getElementById('app').style.display='block';
+updateUI();
+render();
 }
 
-function addFile(file, type){
-  const reader = new FileReader();
-  reader.onload = function(e){
-    const data = { name:file.name, url:e.target.result, type:file.type };
-    saveData(type, data);
-    render();
-  };
-  reader.readAsDataURL(file);
+function isAdmin(){return currentUser==='bosstyme';}
+
+function updateUI(){
+document.getElementById('userInfo').textContent=
+'Connecté: '+currentUser+(isAdmin()?' (ADMIN)':'');
 }
 
-function saveData(type, data){
-  let list = JSON.parse(localStorage.getItem(type) || '[]');
-  list.push(data);
-  localStorage.setItem(type, JSON.stringify(list));
+function handleFiles(e,type){
+for(let f of e.target.files){
+const reader=new FileReader();
+reader.onload=x=>{
+let list=JSON.parse(localStorage.getItem(type)||'[]');
+list.push({name:f.name,url:x.target.result,type:f.type});
+localStorage.setItem(type,JSON.stringify(list));
+render();
+};
+reader.readAsDataURL(f);
+}
 }
 
-function deleteItem(type, index){
-  let list = JSON.parse(localStorage.getItem(type));
-  list.splice(index,1);
-  localStorage.setItem(type, JSON.stringify(list));
-  render();
+function deleteItem(type,i){
+if(!isAdmin()) return alert('Admin seulement');
+let list=JSON.parse(localStorage.getItem(type));
+list.splice(i,1);
+localStorage.setItem(type,JSON.stringify(list));
+render();
 }
 
 function render(){
-  ['cours','revision'].forEach(type=>{
-    const container = document.getElementById(type+'List');
-    container.innerHTML='';
-    const list = JSON.parse(localStorage.getItem(type) || '[]');
+['cours','revision'].forEach(type=>{
+let cont=document.getElementById(type+'List');
+cont.innerHTML='';
+let list=JSON.parse(localStorage.getItem(type)||'[]');
+list.forEach((it,i)=>{
+let d=document.createElement('div');d.className='item';
 
-    list.forEach((item,i)=>{
-      const div = document.createElement('div');
-      div.className='item';
+if(it.type.startsWith('image')){
+let img=document.createElement('img');
+img.src=it.url;img.onclick=()=>zoom(it.url);
+d.appendChild(img);
+}else{
+let a=document.createElement('a');
+a.href=it.url;a.textContent=it.name;a.target='_blank';
+d.appendChild(a);
+}
 
-      if(item.type.startsWith('image')){
-        const img=document.createElement('img');
-        img.src=item.url;
-        img.onclick=()=>zoom(item.url);
-        div.appendChild(img);
-      } else {
-        const link=document.createElement('a');
-        link.href=item.url;
-        link.textContent=item.name;
-        link.target='_blank';
-        div.appendChild(link);
-      }
+let dl=document.createElement('a');
+dl.href=it.url;dl.download=it.name;dl.textContent='⬇️';dl.className='download';
+d.appendChild(dl);
 
-      const dl=document.createElement('a');
-      dl.href=item.url;
-      dl.download=item.name;
-      dl.textContent='⬇️';
-      dl.className='download';
+if(isAdmin()){
+let del=document.createElement('button');
+del.textContent='❌';del.className='delete';
+del.onclick=()=>deleteItem(type,i);
+d.appendChild(del);
+}
 
-      const del=document.createElement('button');
-      del.textContent='❌';
-      del.className='delete';
-      del.onclick=()=>deleteItem(type,i);
+cont.appendChild(d);
+});
+});
+}
 
-      div.appendChild(dl);
-      div.appendChild(del);
-      container.appendChild(div);
-    });
-  });
+function switchTab(id,e){
+document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+e.target.classList.add('active');
 }
 
 function zoom(src){
-  document.getElementById('modal').style.display='flex';
-  document.getElementById('modalImg').src=src;
+document.getElementById('modal').style.display='flex';
+document.getElementById('modalImg').src=src;
 }
+function closeModal(){document.getElementById('modal').style.display='none';}
 
-function closeModal(){
-  document.getElementById('modal').style.display='none';
-}
-
-render();
+// session auto
+const s=localStorage.getItem('session');
+if(s){currentUser=s;document.getElementById('auth').style.display='none';document.getElementById('app').style.display='block';updateUI();render();}
 </script>
 
 </body>
