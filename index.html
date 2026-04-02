@@ -48,6 +48,17 @@
     .content.active {
       display: block;
     }
+
+    .image-container img {
+      max-width: 200px;
+      margin: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
+    .upload {
+      margin-top: 15px;
+    }
   </style>
 </head>
 <body>
@@ -57,22 +68,34 @@
 </header>
 
 <div class="tabs">
-  <div class="tab active" onclick="showTab('cours')">Cours</div>
-  <div class="tab" onclick="showTab('revision')">Révision</div>
+  <div class="tab active" onclick="showTab('cours', event)">Cours</div>
+  <div class="tab" onclick="showTab('revision', event)">Révision</div>
 </div>
 
 <div id="cours" class="content active">
   <h2>📘 Cours</h2>
   <p>Ajoute ici tes cours : texte, images, vidéos...</p>
+
+  <div class="upload">
+    <input type="file" accept="image/*" onchange="addImage(event, 'coursImages')">
+  </div>
+
+  <div id="coursImages" class="image-container"></div>
 </div>
 
 <div id="revision" class="content">
   <h2>🧠 Révision</h2>
   <p>Ajoute ici des quiz, fiches de révision ou exercices.</p>
+
+  <div class="upload">
+    <input type="file" accept="image/*" onchange="addImage(event, 'revisionImages')">
+  </div>
+
+  <div id="revisionImages" class="image-container"></div>
 </div>
 
 <script>
-  function showTab(tabId) {
+  function showTab(tabId, event) {
     const contents = document.querySelectorAll('.content');
     const tabs = document.querySelectorAll('.tab');
 
@@ -80,8 +103,18 @@
     tabs.forEach(t => t.classList.remove('active'));
 
     document.getElementById(tabId).classList.add('active');
-
     event.target.classList.add('active');
+  }
+
+  function addImage(event, containerId) {
+    const container = document.getElementById(containerId);
+    const file = event.target.files[0];
+
+    if (file) {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(file);
+      container.appendChild(img);
+    }
   }
 </script>
 
