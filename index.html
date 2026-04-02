@@ -2,36 +2,44 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Site Révision & Cours</title>
+  <title>Révision App</title>
   <style>
-    body { font-family: Arial; margin:0; background:#f4f4f4; }
-    header { background:#333; color:white; padding:15px; text-align:center; }
-    .tabs { display:flex; background:#444; }
-    .tab { flex:1; padding:15px; text-align:center; color:white; cursor:pointer; }
-    .tab.active { background:#222; }
-    .content { display:none; padding:20px; background:white; }
+    body { font-family: 'Segoe UI', sans-serif; margin:0; background:#0f172a; color:#e2e8f0; }
+    header { padding:20px; text-align:center; font-size:24px; font-weight:bold; background:#020617; }
+
+    .tabs { display:flex; }
+    .tab { flex:1; padding:15px; text-align:center; cursor:pointer; background:#1e293b; }
+    .tab.active { background:#38bdf8; color:#020617; font-weight:bold; }
+
+    .content { display:none; padding:20px; }
     .content.active { display:block; }
 
-    .image-container img {
-      max-width:200px; margin:10px; border-radius:10px; cursor:pointer;
+    .dropzone {
+      border:2px dashed #38bdf8;
+      padding:20px;
+      text-align:center;
+      margin-bottom:15px;
+      border-radius:10px;
     }
 
-    .pdf-item, .img-item {
-      display:flex; align-items:center; gap:10px; margin:10px 0;
+    .item {
+      display:flex; align-items:center; gap:10px;
+      background:#1e293b; padding:10px; margin:10px 0; border-radius:10px;
     }
 
-    button {
-      background:red; color:white; border:none; padding:5px 10px;
-      border-radius:5px; cursor:pointer;
+    img { max-width:120px; border-radius:10px; cursor:pointer; }
+
+    button, a {
+      padding:5px 10px; border:none; border-radius:6px;
+      text-decoration:none; cursor:pointer;
     }
 
-    .download {
-      background:green;
-    }
+    .delete { background:#ef4444; color:white; }
+    .download { background:#22c55e; color:white; }
 
     .modal {
       display:none; position:fixed; top:0; left:0;
-      width:100%; height:100%; background:rgba(0,0,0,0.8);
+      width:100%; height:100%; background:rgba(0,0,0,0.9);
       justify-content:center; align-items:center;
     }
 
@@ -40,35 +48,25 @@
 </head>
 <body>
 
-<header><h1>Mon Site de Révision</h1></header>
+<header>📚 Révision App</header>
 
 <div class="tabs">
-  <div class="tab active" onclick="showTab('cours', event)">Cours</div>
-  <div class="tab" onclick="showTab('revision', event)">Révision</div>
+  <div class="tab active" onclick="switchTab('cours', event)">Cours</div>
+  <div class="tab" onclick="switchTab('revision', event)">Révision</div>
 </div>
 
 <div id="cours" class="content active">
-  <h2>📘 Cours</h2>
-
-  <h3>Images</h3>
-  <input type="file" accept="image/*" onchange="addImage(event, 'coursImages')">
-  <div id="coursImages"></div>
-
-  <h3>PDF</h3>
-  <input type="file" accept="application/pdf" onchange="addPDF(event, 'coursPDFs')">
-  <div id="coursPDFs"></div>
+  <div class="dropzone" ondrop="drop(event,'cours')" ondragover="allowDrop(event)">
+    Glisse tes fichiers ici (images ou PDF)
+  </div>
+  <div id="coursList"></div>
 </div>
 
 <div id="revision" class="content">
-  <h2>🧠 Révision</h2>
-
-  <h3>Images</h3>
-  <input type="file" accept="image/*" onchange="addImage(event, 'revisionImages')">
-  <div id="revisionImages"></div>
-
-  <h3>PDF</h3>
-  <input type="file" accept="application/pdf" onchange="addPDF(event, 'revisionPDFs')">
-  <div id="revisionPDFs"></div>
+  <div class="dropzone" ondrop="drop(event,'revision')" ondragover="allowDrop(event)">
+    Glisse tes fichiers ici (images ou PDF)
+  </div>
+  <div id="revisionList"></div>
 </div>
 
 <div id="modal" class="modal" onclick="closeModal()">
@@ -76,75 +74,86 @@
 </div>
 
 <script>
-function showTab(tabId, event) {
+function switchTab(id, e){
   document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById(tabId).classList.add('active');
-  event.target.classList.add('active');
+  document.getElementById(id).classList.add('active');
+  e.target.classList.add('active');
 }
 
-function addImage(event, containerId) {
-  const container = document.getElementById(containerId);
-  const file = event.target.files[0];
+function allowDrop(e){ e.preventDefault(); }
 
-  if(file){
-    const wrapper = document.createElement('div');
-    wrapper.className = 'img-item';
-
-    const img = document.createElement('img');
-    const url = URL.createObjectURL(file);
-    img.src = url;
-    img.onclick = ()=>zoomImage(url);
-
-    const download = document.createElement('a');
-    download.href = url;
-    download.download = file.name;
-    download.textContent = 'Télécharger';
-    download.className = 'download';
-
-    const del = document.createElement('button');
-    del.textContent='Supprimer';
-    del.onclick=()=>wrapper.remove();
-
-    wrapper.appendChild(img);
-    wrapper.appendChild(download);
-    wrapper.appendChild(del);
-    container.appendChild(wrapper);
-  }
+function drop(e, type){
+  e.preventDefault();
+  const files = e.dataTransfer.files;
+  for(let file of files){ addFile(file, type); }
 }
 
-function addPDF(event, containerId) {
-  const container = document.getElementById(containerId);
-  const file = event.target.files[0];
-
-  if(file){
-    const wrapper = document.createElement('div');
-    wrapper.className='pdf-item';
-
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(file);
-    link.href = url;
-    link.textContent = file.name;
-    link.target='_blank';
-
-    const download = document.createElement('a');
-    download.href = url;
-    download.download = file.name;
-    download.textContent = 'Télécharger';
-    download.className = 'download';
-
-    const del = document.createElement('button');
-    del.textContent='Supprimer';
-    del.onclick=()=>wrapper.remove();
-
-    wrapper.appendChild(link);
-    wrapper.appendChild(download);
-    wrapper.appendChild(del);
-    container.appendChild(wrapper);
-  }
+function addFile(file, type){
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const data = { name:file.name, url:e.target.result, type:file.type };
+    saveData(type, data);
+    render();
+  };
+  reader.readAsDataURL(file);
 }
 
-function zoomImage(src){
+function saveData(type, data){
+  let list = JSON.parse(localStorage.getItem(type) || '[]');
+  list.push(data);
+  localStorage.setItem(type, JSON.stringify(list));
+}
+
+function deleteItem(type, index){
+  let list = JSON.parse(localStorage.getItem(type));
+  list.splice(index,1);
+  localStorage.setItem(type, JSON.stringify(list));
+  render();
+}
+
+function render(){
+  ['cours','revision'].forEach(type=>{
+    const container = document.getElementById(type+'List');
+    container.innerHTML='';
+    const list = JSON.parse(localStorage.getItem(type) || '[]');
+
+    list.forEach((item,i)=>{
+      const div = document.createElement('div');
+      div.className='item';
+
+      if(item.type.startsWith('image')){
+        const img=document.createElement('img');
+        img.src=item.url;
+        img.onclick=()=>zoom(item.url);
+        div.appendChild(img);
+      } else {
+        const link=document.createElement('a');
+        link.href=item.url;
+        link.textContent=item.name;
+        link.target='_blank';
+        div.appendChild(link);
+      }
+
+      const dl=document.createElement('a');
+      dl.href=item.url;
+      dl.download=item.name;
+      dl.textContent='⬇️';
+      dl.className='download';
+
+      const del=document.createElement('button');
+      del.textContent='❌';
+      del.className='delete';
+      del.onclick=()=>deleteItem(type,i);
+
+      div.appendChild(dl);
+      div.appendChild(del);
+      container.appendChild(div);
+    });
+  });
+}
+
+function zoom(src){
   document.getElementById('modal').style.display='flex';
   document.getElementById('modalImg').src=src;
 }
@@ -152,6 +161,8 @@ function zoomImage(src){
 function closeModal(){
   document.getElementById('modal').style.display='none';
 }
+
+render();
 </script>
 
 </body>
