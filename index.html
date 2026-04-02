@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Site Révision & Cours</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    header {
+      background: #333;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .tabs {
+      display: flex;
+      background: #444;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 15px;
+      text-align: center;
+      color: white;
+      cursor: pointer;
+    }
+
+    .tab:hover {
+      background: #666;
+    }
+
+    .tab.active {
+      background: #222;
+    }
+
+    .content {
+      padding: 20px;
+      display: none;
+      background: white;
+      min-height: 300px;
+    }
+
+    .content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mon Site de Révision</h1>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('cours')">Cours</div>
+  <div class="tab" onclick="showTab('revision')">Révision</div>
+</div>
+
+<div id="cours" class="content active">
+  <h2>📘 Cours</h2>
+  <p>Ajoute ici tes cours : texte, images, vidéos...</p>
+</div>
+
+<div id="revision" class="content">
+  <h2>🧠 Révision</h2>
+  <p>Ajoute ici des quiz, fiches de révision ou exercices.</p>
+</div>
+
+<script>
+  function showTab(tabId) {
+    const contents = document.querySelectorAll('.content');
+    const tabs = document.querySelectorAll('.tab');
+
+    contents.forEach(c => c.classList.remove('active'));
+    tabs.forEach(t => t.classList.remove('active'));
+
+    document.getElementById(tabId).classList.add('active');
+
+    event.target.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
